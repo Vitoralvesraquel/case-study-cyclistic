@@ -1,0 +1,63 @@
+---
+title: "Case Study Cyclistic"
+author: "Vitor Alves Raquel"
+date: '2022-06-08'
+output: html_document
+---
+
+# case-study-cyclistic
+
+Case study for Google Data Analytics Certificate's capstone project.
+
+### Initial considerations
+
+Annual members are much more profitable than casual riders.
+
+The insights from the analysis could clarify the differences between annual members and casual riders to design marketing strategies aimed at converting casual riders into annual members.
+
+Customers who purchase single-ride or full-day passes are referred to as casual riders. Customers who purchase annual memberships are Cyclistic members.
+
+Understand how do annual members and casual riders use Cyclistic bikes differently. 
+
+### Data
+
+The original data is available at: https://divvy-tripdata.s3.amazonaws.com/index.html
+The data licence can be found here: https://ride.divvybikes.com/data-license-agreement
+
+The data was collected by the company and was organized for this analysis in a directory to keep the original data unchanged. Each month has a subdirectory 
+containing a CSV file, comprehending the last 12 months, from June 2021 to May 
+2022.
+
+![Directory structure](/home/vitor/Pictures/directory_structure.png)
+
+### Process Data
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+```
+
+Make a list of the csv files inside the directory with original data.
+Apply read_csv function to all files in the list.
+
+```{r message=FALSE}
+full_df_list <- list.files(path = "Data/Original", pattern = ".csv", 
+                      full.names = TRUE, recursive = TRUE) %>% 
+    lapply(read_csv)
+```
+
+Count total number of rows in the list.
+
+```{r}
+sum_rows_list <- sum(sapply(full_df_list, nrow))
+sum_rows_list
+```
+
+Combine all data from the list. Compare the number of rows in the list with the
+number of rows in the new dataframe to verify that all rows were combined.
+
+```{r}
+full_df <- bind_rows(full_df_list)
+sum_rows_list == nrow(full_df)
+
+```
+
