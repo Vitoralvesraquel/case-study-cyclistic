@@ -19,6 +19,7 @@
 
 # RStudio files
 .Rproj.user/
+case-study-cyclistic.Rproj
 
 # produced vignettes
 vignettes/*.html
@@ -37,3 +38,10 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+# Files created for visualization
+README.html
+case-study-cyclistic.nb.html
+
+# Data directory
+Data
