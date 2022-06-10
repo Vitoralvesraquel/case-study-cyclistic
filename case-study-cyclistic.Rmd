@@ -23,6 +23,7 @@ Understand how do annual members and casual riders use Cyclistic bikes different
 
 ```{r}
 setwd("/home/vitor/RStudio-projects/case-study-cyclistic")
+Sys.setlocale("LC_ALL", "C")
 ```
 
 
@@ -66,6 +67,13 @@ full_df <- bind_rows(full_df_list)
 sum_rows_list == nrow(full_df)
 
 ```
+Remove list from memory.
+```{r}
+rm(full_df_list)
+```
+
+
+
 View columns data types and first rows.
 
 ```{r}
@@ -76,6 +84,13 @@ Check for NAs.
 ```{r}
 colSums(is.na(full_df))
 ```
+Count unique values for ride_id and compare with number of rows to check for 
+duplicates.
+```{r}
+length(unique(full_df$ride_id)) == sum_rows_list
+```
+
+
 Create columns for trip duration, year, month, weekday.
 
 ```{r}
@@ -85,3 +100,24 @@ full_df <- full_df %>%
            month = month(started_at),
            weekday = wday(started_at, label = TRUE))
 ```
+
+Create bar plots comparing members and casual users.
+
+```{r}
+ggplot(data = full_df) +
+    geom_bar(fill = "blue", width = 0.5, mapping = aes(x = member_casual))
+```
+
+```{r}
+ggplot(data = full_df) +
+    geom_bar(position = position_dodge2(width = 1)
+             , width = 0.8, mapping = aes(x = weekday, fill = member_casual))
+```
+
+On weekends there is a higher amount of casual riders' trips than members', 
+while on weekdays there is a higher count on members' trips.
+This suggests that members use bikes while commuting.
+
+This can be further explored by comparing the time of the day when trips happen 
+for both groups. The ended_at, time when trip ends, would reflect the starting 
+work hour, while started_at, the time when work ends.
