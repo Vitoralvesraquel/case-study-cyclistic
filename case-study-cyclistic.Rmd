@@ -21,7 +21,7 @@ Understand how do annual members and casual riders use Cyclistic bikes different
 
 ### Data
 
-```{r}
+```{r message=FALSE}
 setwd("/home/vitor/RStudio-projects/case-study-cyclistic")
 Sys.setlocale("LC_ALL", "C")
 ```
@@ -36,11 +36,13 @@ containing a CSV file, comprehending the last 12 months, from June 2021 to May
 
 ![Directory structure](directory_structure.png)
 
+
 ### Process Data
 
 ```{r message=FALSE, warning=FALSE}
 library(tidyverse)
 library(lubridate)
+library(mapview)
 ```
 
 Make a list of the csv files inside the directory with original data.
@@ -89,15 +91,18 @@ duplicates.
 length(unique(full_df$ride_id)) == sum_rows_list
 ```
 
-Create columns for trip duration, year, month, weekday.
+
+Create columns for trip duration, month_year, day, weekday.
 
 ```{r}
 full_df <- full_df %>% 
     mutate(trip_duration = as.duration(ended_at - started_at),
-           year = year(started_at),
-           month = month(started_at),
+           month_year = format(started_at, "%Y-%m"),
+           day = day(started_at),
            weekday = wday(started_at, label = TRUE))
+unique(full_df$month_year)
 ```
+
 
 View data summary to check for anything unusual.
 
@@ -115,7 +120,10 @@ full_df <- full_df[full_df$trip_duration > 60 & full_df$trip_duration < 86400,]
 summary(full_df$trip_duration)
 ```
 
-Create bar plots comparing members and casual users.
+
+Create plots comparing members and casual users.
+
+comparing trip count
 
 ```{r}
 ggplot(data = full_df) +
@@ -152,13 +160,25 @@ weekday_plot +
 
 
 
-
 ```{r}
 ggplot(data = full_df) +
     geom_histogram(position = position_dodge(),
              mapping = aes(x = ended_at, fill = member_casual))
 ```
 
+```{r}
+glimpse(full_df)
+```
+
+
+```{r}
+month_plot <- ggplot(data = full_df) +
+    geom_bar(position = position_dodge2()) +
+    facet_wrap("month_year")
+
+month_plot + 
+    aes(x = day, fill = member_casual)
+```
 
 
 
@@ -172,5 +192,18 @@ ggplot(data = full_df[full_df$trip_duration < 3600,]) +
 
 ```{r}
 summary(full_df)
+```
+
+
+analyze geographical coordinates
+
+```{r}
+set.seed(111)
+
+to_map_df <- sample_n(full_df, 1000)
+
+mapview(to_map_df, xcol = "start_lng", ycol = "start_lat", crs = 4269, 
+        grid = FALSE)
+
 ```
 
