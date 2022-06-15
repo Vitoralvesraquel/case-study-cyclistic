@@ -13,11 +13,14 @@ Case study for Google Data Analytics Certificate's capstone project.
 
 Annual members are much more profitable than casual riders.
 
-The insights from the analysis could clarify the differences between annual members and casual riders to design marketing strategies aimed at converting casual riders into annual members.
+The insights from the analysis could clarify the differences between annual 
+members and casual riders to design marketing strategies aimed at converting 
+casual riders into annual members.
 
 Customers who purchase single-ride or full-day passes are referred to as casual riders. Customers who purchase annual memberships are Cyclistic members.
 
-Understand how do annual members and casual riders use Cyclistic bikes differently. 
+Understand how do annual members and casual riders use Cyclistic bikes 
+differently. 
 
 ### Data
 
@@ -36,14 +39,21 @@ containing a CSV file, comprehending the last 12 months, from June 2021 to May
 
 ![Directory structure](directory_structure.png)
 
-The merging and cleaning is on cyclistic_cleaning.Rmd
+The merging and cleaning is on cyclistic_cleaning.Rmd, which saves the file 
+"df.Rda" on "Data" directory.
+
+```{r}
+load("Data/df.Rda")
+```
+
 
 ### Process Data
 
 ```{r message=FALSE, warning=FALSE}
 library(tidyverse)
 library(lubridate)
-library(mapview)
+# library(mapview)
+# library(maps)
 ```
 
 
@@ -53,12 +63,12 @@ Create plots comparing members and casual users.
 comparing trip count
 
 ```{r}
-ggplot(data = full_df) +
+ggplot(data = df) +
     geom_bar(fill = "blue", width = 0.5, mapping = aes(x = member_casual))
 ```
 
 ```{r}
-ggplot(data = full_df) +
+ggplot(data = df) +
     geom_bar(position = position_dodge2(width = 1)
              , width = 0.8, mapping = aes(x = weekday, fill = member_casual))
 ```
@@ -72,7 +82,7 @@ for both groups. The ended_at, time when trip ends, would reflect the starting
 work hour, while started_at, the time when work ends.
 
 ```{r}
-weekday_plot <- ggplot(data = full_df) +
+weekday_plot <- ggplot(data = df) +
     geom_histogram(position = position_dodge(), bins = 24) +
         facet_wrap("weekday")
 
@@ -88,18 +98,14 @@ weekday_plot +
 
 
 ```{r}
-ggplot(data = full_df) +
+ggplot(data = df) +
     geom_histogram(position = position_dodge(),
              mapping = aes(x = ended_at, fill = member_casual))
 ```
+ 
 
 ```{r}
-glimpse(full_df)
-```
-
-
-```{r}
-month_plot <- ggplot(data = full_df) +
+month_plot <- ggplot(data = df) +
     geom_bar(position = position_dodge2()) +
     facet_wrap("month_year")
 
@@ -111,26 +117,41 @@ month_plot +
 
 analyze duration
 ```{r}
-ggplot(data = full_df[full_df$trip_duration < 3600,]) +
+ggplot(data = df[df$trip_duration < 3600,]) +
     geom_histogram(position = position_dodge()) +
     aes(x = trip_duration, fill = member_casual)
     
 ```
 
+
+<!-- analyze geographical coordinates -->
+
 ```{r}
-summary(full_df)
+# set.seed(111)
+# 
+# to_map_df <- sample_n(df, 1000)
+# 
+# mapview(to_map_df, xcol = "start_lng", ycol = "start_lat", crs = 4269, 
+#         grid = FALSE)
+
 ```
 
-
-analyze geographical coordinates
+```{r}
+# m <- ggplot(to_map_df, aes(x = start_lng, y = start_lat)) +
+#     geom_point()
+# 
+# m
+```
 
 ```{r}
-set.seed(111)
+# library(ggmap)
+```
 
-to_map_df <- sample_n(full_df, 1000)
+```{r}
+# test_map <- qmplot(x = start_lng, y = start_lat, data = to_map_df)
+```
 
-mapview(to_map_df, xcol = "start_lng", ycol = "start_lat", crs = 4269, 
-        grid = FALSE)
-
+```{r}
+# plot(test_map)
 ```
 
