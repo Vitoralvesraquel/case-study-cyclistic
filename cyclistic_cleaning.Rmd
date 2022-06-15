@@ -95,7 +95,9 @@ summary(df)
 
 The trip duration column shows some problems. The minimum value is negative and 
 maximum is in weeks, which is too big. 
-Values smaller than 1 minute will also be disconsidered, since they could represent false starts.
+Values smaller than 1 minute will also be disconsidered, since they could 
+represent false starts or users trying to re-dock, according to the data 
+description at https://ride.divvybikes.com/system-data.
 Large values must be discussed with the people responsible for the data before 
 discarding.
 
@@ -112,17 +114,49 @@ df <- df %>%
            end_station_name = str_squish(end_station_name))
 ```
 
+check unique values
+
 ```{r}
-table(df$member_casual)
+unique(df$rideable_type)
+unique(df$member_casual)
 ```
 
+compare start and end station names
 
 ```{r}
-save(df, file = "Data/df.Rda")
+unique_start_station <- sort(unique(df$start_station_name))
+unique_end_station <- sort(unique(df$end_station_name))
+only_start <- setdiff(unique_start_station, unique_end_station)
 ```
 
 ```{r}
-rm(df, sum_rows_list)
+df[df$start_station_name %in% only_start,]
+```
+
+```{r}
+only_end <- setdiff(unique_end_station, unique_start_station)
+```
+
+```{r}
+df[df$end_station_name %in% only_end,]
+```
+
+The comparison between start and end station showed some issues that should be 
+discussed with the people responsible for the database before discarding any 
+rows:
+- Why some stations only appear at start or end?
+- Why some coordinates are rounded to 2 decimal digits? In latitude this is an 
+accuracy at around 1 kilometer.
+- Every rideable_type in those cases are electric_bike. Does the technical team 
+diagnosed any problems in electrical bikes?
+
+
+```{r}
+# save(df, file = "Data/df.Rda")
+```
+
+```{r}
+# rm(df, sum_rows_list)
 ```
 
 
