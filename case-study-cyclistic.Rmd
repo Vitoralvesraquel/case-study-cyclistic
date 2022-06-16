@@ -85,25 +85,11 @@ Since the number of member trips is higher than casual trips, their behavior
 would be better expressed in percentage of total trips for each group.
 
 ```{r}
-member_num <- table(df$member_casual)
-member_num
-```
-
-```{r}
 member_week <- table(df$member_casual, df$weekday)
-member_week
-```
-
-
-
-```{r}
-member_week["casual",] <- member_week["casual",] / sum(member_week["casual",])
-member_week["member",] <- member_week["member",] / sum(member_week["member",])
-member_week
-```
-
-```{r}
-
+member_week["casual",] <- 100 * (member_week["casual",] / 
+                                 sum(member_week["casual",]))
+member_week["member",] <- 100 * (member_week["member",] / 
+                                 sum(member_week["member",]))
 member_week_df <- as.data.frame(member_week)
 colnames(member_week_df) <- c("member_casual", "weekday", "percent")
 member_week_df
@@ -112,7 +98,9 @@ member_week_df
 
 ```{r}
 ggplot(member_week_df, aes(x = weekday, y = percent, fill = member_casual)) +
-    geom_bar(stat = "identity", position = position_dodge2(width = 1))
+    geom_bar(stat = "identity", position = position_dodge2(width = 1)) +
+    labs(title = "Percentage of rides for each weekday") +
+    theme(legend.title = element_blank())
     
 ```
 
@@ -123,13 +111,16 @@ This suggests that members use bikes while commuting.
 This can be further explored by comparing the time of the day when trips happen 
 for both groups.
 
+
 ```{r}
 ggplot(data = df) +
     geom_bar(position = position_dodge()) +
     facet_wrap("weekday") +
     scale_x_continuous(breaks = seq(0, 24, 3)) +
     aes(x = as.integer(format(started_at, "%H")), fill = member_casual) +
-    labs(x = "Hour", y = "Number of trips")
+    labs(x = "Hour", y = "Number of trips") +
+    theme(legend.title = element_blank())
+
 ```
 
 The shape of the plots are very different for weekends and weekdays and they 
