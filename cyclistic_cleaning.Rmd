@@ -99,7 +99,10 @@ Values smaller than 1 minute will also be disconsidered, since they could
 represent false starts or users trying to re-dock, according to the data 
 description at https://ride.divvybikes.com/system-data.
 Large values must be discussed with the people responsible for the data before 
-discarding.
+discarding. Duration values longer than one day are considered as lost or stolen 
+bikes, according to 
+https://help.divvybikes.com/hc/en-us/articles/360033484791-What-if-I-keep-a-bike-out-too-long-, 
+and will remain in the dataset for further analysis.
 
 ```{r}
 df <- df[df$trip_duration > 60,]
@@ -120,6 +123,9 @@ check unique values
 unique(df$rideable_type)
 unique(df$member_casual)
 ```
+It is not explained at the data description at the company website what 
+docked_bike means in rideable_type. It will remain in the analysis until 
+clarified.
 
 compare start and end station names
 
@@ -152,11 +158,12 @@ diagnosed any problems in electrical bikes?
 
 
 ```{r}
-# save(df, file = "Data/df.Rda")
+save(df, file = "Data/df.Rda")
 ```
 
 ```{r}
-# rm(df, sum_rows_list)
+rm(df, sum_rows_list, only_end, only_start, unique_start_station, 
+   unique_end_station)
 ```
 
 
