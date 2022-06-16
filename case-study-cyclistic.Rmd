@@ -56,21 +56,64 @@ library(lubridate)
 # library(maps)
 ```
 
+## Create plots comparing members and casual users.
 
-
-Create plots comparing members and casual users.
+View column names to guide the analysis.
+```{r}
+colnames(df)
+```
 
 comparing trip count
 
 ```{r}
 ggplot(data = df) +
-    geom_bar(fill = "blue", width = 0.5, mapping = aes(x = member_casual))
+    geom_bar(width = 0.5, mapping = aes(x = member_casual,
+                                        fill = rideable_type)) +
+    labs(title = "Number of casual and members rides", 
+         subtitle = "with rideable type proportion", x = "")
 ```
+
 
 ```{r}
 ggplot(data = df) +
-    geom_bar(position = position_dodge2(width = 1)
-             , width = 0.8, mapping = aes(x = weekday, fill = member_casual))
+    geom_bar(position = position_dodge2(width = 1),
+             width = 0.8, mapping = aes(x = weekday, fill = member_casual)) +
+    labs(title = "Number of casual and members rides in each weekday" )
+```
+
+Since the number of member trips is higher than casual trips, their behavior 
+would be better expressed in percentage of total trips for each group.
+
+```{r}
+member_num <- table(df$member_casual)
+member_num
+```
+
+```{r}
+member_week <- table(df$member_casual, df$weekday)
+member_week
+```
+
+
+
+```{r}
+member_week["casual",] <- member_week["casual",] / sum(member_week["casual",])
+member_week["member",] <- member_week["member",] / sum(member_week["member",])
+member_week
+```
+
+```{r}
+
+member_week_df <- as.data.frame(member_week)
+colnames(member_week_df) <- c("member_casual", "weekday", "percent")
+member_week_df
+
+```
+
+```{r}
+ggplot(member_week_df, aes(x = weekday, y = percent, fill = member_casual)) +
+    geom_bar(stat = "identity", position = position_dodge2(width = 1))
+    
 ```
 
 On weekends there is a higher amount of casual riders' trips than members', 
@@ -78,29 +121,25 @@ while on weekdays there is a higher count on members' trips.
 This suggests that members use bikes while commuting.
 
 This can be further explored by comparing the time of the day when trips happen 
-for both groups. The ended_at, time when trip ends, would reflect the starting 
-work hour, while started_at, the time when work ends.
+for both groups.
 
 ```{r}
-weekday_plot <- ggplot(data = df) +
-    geom_histogram(position = position_dodge(), bins = 24) +
-        facet_wrap("weekday")
-
-weekday_plot + 
-    aes(x = hms::as_hms(ended_at), fill = member_casual)
+ggplot(data = df) +
+    geom_bar(position = position_dodge()) +
+    facet_wrap("weekday") +
+    scale_x_continuous(breaks = seq(0, 24, 3)) +
+    aes(x = as.integer(format(started_at, "%H")), fill = member_casual) +
+    labs(x = "Hour", y = "Number of trips")
 ```
 
-```{r}
-weekday_plot + 
-    aes(x = hms::as_hms(started_at), fill = member_casual)
-```
-
+The shape of the plots are very different for weekends and weekdays and they 
+confirm that members use the service more to commute to work.
 
 
 ```{r}
 ggplot(data = df) +
-    geom_histogram(position = position_dodge(),
-             mapping = aes(x = ended_at, fill = member_casual))
+    geom_bar(position = position_dodge(), 
+                   mapping = aes(x = month_year, fill = member_casual))
 ```
  
 
