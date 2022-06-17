@@ -63,12 +63,12 @@ add a integer hour column based on start time.
 df <- mutate(df, start_int_hour = as.integer(format(started_at, "%H")))
 ```
 
-
-
 View column names to guide the analysis.
 ```{r}
 colnames(df)
 ```
+
+
 
 comparing trip count
 
@@ -93,7 +93,7 @@ would be better expressed in percentage of total trips for each group.
 
 ```{r}
 member_week <- table(df$member_casual, df$weekday)
-member_week_["casual",] <- 100 * (member_week["casual",] / 
+member_week["casual",] <- 100 * (member_week["casual",] / 
                                  sum(member_week["casual",]))
 member_week["member",] <- 100 * (member_week["member",] / 
                                  sum(member_week["member",]))
@@ -115,17 +115,26 @@ This suggests that members use bikes while commuting.
 
 This can be further explored by comparing the time of the day when trips happen 
 for both groups.
+
 ```{r}
-day_sum_df <- df %>% 
-    group_by(member_casual, weekday) %>% 
-    summarise(total_day = length(member_casual))
-day_sum_df    
+ggplot(data = df) +
+    geom_bar(position = position_dodge()) +
+    facet_wrap("weekday") +
+    scale_x_continuous(breaks = seq(0, 24, 3)) +
+    aes(x = start_int_hour, fill = member_casual) +
+    labs(x = "Hour", y = "Number of trips") +
+    theme(legend.title = element_blank())
 ```
 
 ```{r}
-# casual	Sun	463121	
-# casual	Sun	0	17494	
-# percent   0.03777415
+# total rides by day of the week by member_casual
+day_sum_df <- df %>% 
+    group_by(member_casual, weekday) %>% 
+    summarise(total_day = length(member_casual))
+glimpse(day_sum_df)
+```
+
+```{r}
 hour_sum_df <- df %>% 
     group_by(member_casual, weekday, start_int_hour) %>% 
     summarise(total_hour = length(member_casual))
@@ -134,7 +143,7 @@ hour_sum_df <- left_join(hour_sum_df, day_sum_df)
                                     
 hour_sum_df <- mutate(hour_sum_df, percent = 100 * total_hour / total_day)
 
-hour_sum_df
+glimpse(hour_sum_df)
 ```
 
 ```{r}
@@ -147,21 +156,40 @@ ggplot(data = hour_sum_df) +
     theme(legend.title = element_blank())
 ```
 
-
-```{r}
-ggplot(data = df) +
-    geom_bar(position = position_dodge()) +
-    facet_wrap("weekday") +
-    scale_x_continuous(breaks = seq(0, 24, 3)) +
-    aes(x = start_int_hour, fill = member_casual) +
-    labs(x = "Hour", y = "Number of trips") +
-    theme(legend.title = element_blank())
-
-```
-
 The shape of the plots are very different for weekends and weekdays and they 
 confirm that members use the service more to commute to work.
 
+<!-- create 2 plots, weekday and weekend, for better presentation -->
+
+```{r}
+weekday_end_sum <- day_sum_df %>% 
+    mutate(weekday = ifelse(grepl("S(at|un)", weekday), 
+                            "weekend", "weekday")) %>% 
+    group_by(member_casual, weekday) %>% 
+    summarise(total = sum(total_day))
+
+weekday_end_sum
+```
+
+```{r}
+hour_sum_df <- hour_sum_df %>% 
+    mutate(weekday = ifelse(grepl("S(at|un)", weekday), 
+                            "weekend", "weekday")) %>% 
+    group_by(member_casual, weekday, start_int_hour) %>% 
+    summarise(total_hour = sum(total_hour)) %>% 
+    left_join(weekday_end_sum) %>% 
+    mutate(percent = 100 * total_hour / total)
+```
+
+```{r}
+ggplot(data = hour_sum_df) +
+    geom_bar(position = position_dodge(), stat = "identity") +
+    facet_wrap("weekday", dir = "v") +
+    scale_x_continuous(breaks = seq(0, 24, 3)) +
+    aes(x = start_int_hour, y = percent, fill = member_casual) +
+    labs(x = "Hour", y = "Percent") +
+    theme(legend.title = element_blank())
+```
 
 ```{r}
 ggplot(data = df) +
