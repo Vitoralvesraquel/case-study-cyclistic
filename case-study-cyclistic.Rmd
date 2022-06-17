@@ -68,7 +68,23 @@ View column names to guide the analysis.
 colnames(df)
 ```
 
+Duration values longer than one day are considered as lost or stolen bikes, according to https://help.divvybikes.com/hc/en-us/articles/360033484791-What-if-I-keep-a-bike-out-too-long-. In this analysis, they will be considered as missing.
 
+```{r}
+ggplot(data = df[df$trip_duration > 86400, ]) +
+    geom_bar(width = 0.5, mapping = aes(x = member_casual, fill = rideable_type))
+```
+There are no electric bikes missing, this can be due to some tracking device 
+included only on this model.
+- Discuss with the technical team to find out what is avoiding the electrical 
+bikes to go missing and if it is a device that can be installed on the other 
+model.
+
+Trip duration values higher than one day will be disconsidered from now on.
+
+```{r}
+df <- df[df$trip_duration <= 86400, ]
+```
 
 comparing trip count
 
@@ -199,11 +215,9 @@ ggplot(data = df) +
  
 
 ```{r}
-month_plot <- ggplot(data = df) +
+ggplot(data = df) +
     geom_bar(position = position_dodge2()) +
-    facet_wrap("month_year")
-
-month_plot + 
+    facet_wrap("month_year") +
     aes(x = day, fill = member_casual)
 ```
 
