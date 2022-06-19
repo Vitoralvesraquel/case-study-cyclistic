@@ -9,7 +9,7 @@ output: html_document
 
 Case study for Google Data Analytics Certificate's capstone project.
 
-### Initial considerations
+## Initial considerations
 
 Annual members are much more profitable than casual riders.
 
@@ -22,7 +22,7 @@ Customers who purchase single-ride or full-day passes are referred to as casual 
 Understand how do annual members and casual riders use Cyclistic bikes 
 differently. 
 
-### Data
+## Data
 
 ```{r message=FALSE}
 setwd("/home/vitor/RStudio-projects/case-study-cyclistic")
@@ -47,7 +47,7 @@ load("Data/df.Rda")
 ```
 
 
-### Process Data
+## Analysis
 
 ```{r message=FALSE, warning=FALSE}
 library(tidyverse)
@@ -56,12 +56,7 @@ library(lubridate)
 # library(maps)
 ```
 
-## Create plots comparing members and casual users.
-add a integer hour column based on start time.
-
-```{r}
-df <- mutate(df, start_int_hour = as.integer(format(started_at, "%H")))
-```
+### Create plots comparing members and casual users.
 
 View column names to guide the analysis.
 ```{r}
@@ -74,19 +69,27 @@ Duration values longer than one day are considered as lost or stolen bikes, acco
 ggplot(data = df[df$trip_duration > 86400, ]) +
     geom_bar(width = 0.5, mapping = aes(x = member_casual, fill = rideable_type))
 ```
-There are no electric bikes missing, this can be due to some tracking device 
-included only on this model.
+There are no electric bikes missing, this can be due to battery depletion or 
+some tracking device included only on this model.
 - Discuss with the technical team to find out what is avoiding the electrical 
 bikes to go missing and if it is a device that can be installed on the other 
 model.
 
-Trip duration values higher than one day will be disconsidered from now on.
+Trip duration values higher than one day will be not considered from now on.
 
 ```{r}
 df <- df[df$trip_duration <= 86400, ]
 ```
 
-comparing trip count
+Comparing average trip duration for both groups.
+
+```{r}
+df %>% group_by(member_casual) %>% 
+    summarise(mean_duration = hms::as.hms(round(mean(trip_duration))))
+```
+
+
+comparing trip count.
 
 ```{r}
 ggplot(data = df) +
@@ -166,7 +169,8 @@ glimpse(hour_sum_df)
 ggplot(data = hour_sum_df) +
     geom_bar(position = position_dodge(), stat = "identity") +
     facet_wrap("weekday") +
-    scale_x_continuous(breaks = seq(0, 24, 3)) +
+    scale_x_continuous(breaks = seq(0, 24, 3),
+                       minor_breaks = seq(0, 24)) +
     aes(x = start_int_hour, y = percent, fill = member_casual) +
     labs(x = "Hour", y = "Percent") +
     theme(legend.title = element_blank())
@@ -201,10 +205,12 @@ hour_sum_df <- hour_sum_df %>%
 ggplot(data = hour_sum_df) +
     geom_bar(position = position_dodge(), stat = "identity") +
     facet_wrap("weekday", dir = "v") +
-    scale_x_continuous(breaks = seq(0, 24, 3)) +
+    scale_x_continuous(breaks = seq(0, 24, 3),
+                       minor_breaks = seq(0, 24)) +
     aes(x = start_int_hour, y = percent, fill = member_casual) +
     labs(x = "Hour", y = "Percent") +
-    theme(legend.title = element_blank())
+    theme(legend.title = element_blank(),
+          panel.spacing.x = )
 ```
 
 ```{r}
@@ -230,6 +236,7 @@ ggplot(data = df[df$trip_duration < 3600,]) +
     aes(x = trip_duration, fill = member_casual)
     
 ```
+
 
 
 <!-- analyze geographical coordinates -->
