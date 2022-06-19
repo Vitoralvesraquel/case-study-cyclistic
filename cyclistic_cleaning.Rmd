@@ -1,5 +1,5 @@
 ---
-title: "Cyclistic Data Cleaning"
+title: "Cyclistic Data Cleaning and Preparing"
 author: "Vitor Alves Raquel"
 date: '2022-06-14'
 output: html_document
@@ -75,15 +75,16 @@ duplicates.
 length(unique(df$ride_id)) == sum_rows_list
 ```
 
-Create columns for trip duration, month_year, day, weekday.
+Create columns for trip duration, month_year, day, weekday, and start hour as 
+integer.
 
 ```{r}
 df <- df %>% 
     mutate(trip_duration = as.duration(ended_at - started_at),
            month_year = format(started_at, "%Y-%m"),
            day = day(started_at),
-           weekday = wday(started_at, label = TRUE))
-unique(df$month_year)
+           weekday = wday(started_at, label = TRUE),
+           start_int_hour = as.integer(format(started_at, "%H")))
 ```
 
 
