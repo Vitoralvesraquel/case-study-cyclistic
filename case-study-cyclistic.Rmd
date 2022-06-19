@@ -9,6 +9,7 @@ output: html_document
 
 Case study for Google Data Analytics Certificate's capstone project.
 
+
 ## Initial considerations
 
 Annual members are much more profitable than casual riders.
@@ -22,6 +23,7 @@ Customers who purchase single-ride or full-day passes are referred to as casual 
 Understand how do annual members and casual riders use Cyclistic bikes 
 differently. 
 
+
 ## Data
 
 ```{r message=FALSE}
@@ -33,11 +35,12 @@ Sys.setlocale("LC_ALL", "C")
 The original data is available at: https://divvy-tripdata.s3.amazonaws.com/index.html
 The data licence can be found here: https://ride.divvybikes.com/data-license-agreement
 
-The data was collected by the company and was organized for this analysis in a directory to keep the original data unchanged. Each month has a subdirectory 
+The data was collected by the company and was organized for this analysis in a directory to keep the original data unchanged. Each month has its own subdirectory 
 containing a CSV file, comprehending the last 12 months, from June 2021 to May 
 2022.
 
 ![Directory structure](directory_structure.png)
+
 
 The merging and cleaning is on cyclistic_cleaning.Rmd, which saves the file 
 "df.Rda" on "Data" directory.
@@ -56,12 +59,15 @@ library(lubridate)
 # library(maps)
 ```
 
-### Create plots comparing members and casual users.
+
+### Members and casual users comparison.
 
 View column names to guide the analysis.
+
 ```{r}
 colnames(df)
 ```
+
 
 Duration values longer than one day are considered as lost or stolen bikes, according to https://help.divvybikes.com/hc/en-us/articles/360033484791-What-if-I-keep-a-bike-out-too-long-. In this analysis, they will be considered as missing.
 
@@ -69,6 +75,8 @@ Duration values longer than one day are considered as lost or stolen bikes, acco
 ggplot(data = df[df$trip_duration > 86400, ]) +
     geom_bar(width = 0.5, mapping = aes(x = member_casual, fill = rideable_type))
 ```
+
+
 There are no electric bikes missing, this can be due to battery depletion or 
 some tracking device included only on this model.
 - Discuss with the technical team to find out what is avoiding the electrical 
@@ -81,11 +89,12 @@ Trip duration values higher than one day will be not considered from now on.
 df <- df[df$trip_duration <= 86400, ]
 ```
 
+
 Comparing average trip duration for both groups.
 
 ```{r}
 df %>% group_by(member_casual) %>% 
-    summarise(mean_duration = hms::as.hms(round(mean(trip_duration))))
+    summarise(mean_duration = hms::as_hms(round(mean(trip_duration))))
 ```
 
 
@@ -107,29 +116,29 @@ ggplot(data = df) +
     labs(title = "Number of casual and members rides in each weekday" )
 ```
 
-Since the number of member trips is higher than casual trips, their behavior 
+Since the total number of member trips is higher than casual trips, their behavior 
 would be better expressed in percentage of total trips for each group.
 
 ```{r}
-member_week <- table(df$member_casual, df$weekday)
-member_week["casual",] <- 100 * (member_week["casual",] / 
-                                 sum(member_week["casual",]))
-member_week["member",] <- 100 * (member_week["member",] / 
-                                 sum(member_week["member",]))
-member_week_df <- as.data.frame(member_week)
-colnames(member_week_df) <- c("member_casual", "weekday", "percent")
+weekday_df <- as.data.frame(table(df$member_casual, df$weekday))
+colnames(weekday_df) <- c("member_casual", "weekday", "trips")
+
+trip_count <- weekday_df %>% 
+    group_by(member_casual) %>% 
+    summarise(total_trips = sum(trips))
+
+weekday_df <- left_join(weekday_df, trip_count) %>% 
+    mutate(percent = 100 * trips / total_trips)
 ```
 
 ```{r}
-ggplot(member_week_df, aes(x = weekday, y = percent, fill = member_casual)) +
+ggplot(weekday_df, aes(x = weekday, y = percent, fill = member_casual)) +
     geom_bar(stat = "identity", position = position_dodge2(width = 1)) +
     labs(title = "Percentage of rides for each weekday") +
     theme(legend.title = element_blank())
-    
 ```
 
-On weekends there is a higher amount of casual riders' trips than members', 
-while on weekdays there is a higher count on members' trips.
+Casual riders use the service more on weekends and members on weekdays.
 This suggests that members use bikes while commuting.
 
 This can be further explored by comparing the time of the day when trips happen 
@@ -146,27 +155,15 @@ ggplot(data = df) +
 ```
 
 ```{r}
-# total rides by day of the week by member_casual
-day_sum_df <- df %>% 
-    group_by(member_casual, weekday) %>% 
-    summarise(total_day = length(member_casual))
-glimpse(day_sum_df)
-```
-
-```{r}
-hour_sum_df <- df %>% 
+hour_df <- df %>% 
     group_by(member_casual, weekday, start_int_hour) %>% 
-    summarise(total_hour = length(member_casual))
-
-hour_sum_df <- left_join(hour_sum_df, day_sum_df)
-                                    
-hour_sum_df <- mutate(hour_sum_df, percent = 100 * total_hour / total_day)
-
-glimpse(hour_sum_df)
+    summarise(total_hour = length(member_casual)) %>% 
+    left_join(trip_count) %>% 
+    mutate(percent = 100 * total_hour / total_trips)
 ```
 
 ```{r}
-ggplot(data = hour_sum_df) +
+ggplot(data = hour_df) +
     geom_bar(position = position_dodge(), stat = "identity") +
     facet_wrap("weekday") +
     scale_x_continuous(breaks = seq(0, 24, 3),
@@ -177,32 +174,21 @@ ggplot(data = hour_sum_df) +
 ```
 
 The shape of the plots are very different for weekends and weekdays and they 
-confirm that members use the service more to commute to work.
+confirm that members use the service more to commute to work than casuals, while casuals use more on weekends than members.
 
 <!-- create 2 plots, weekday and weekend, for better presentation -->
 
 ```{r}
-weekday_end_sum <- day_sum_df %>% 
+total_hour_df <- hour_df %>% 
     mutate(weekday = ifelse(grepl("S(at|un)", weekday), 
                             "weekend", "weekday")) %>% 
-    group_by(member_casual, weekday) %>% 
-    summarise(total = sum(total_day))
-
-weekday_end_sum
-```
-
-```{r}
-hour_sum_df <- hour_sum_df %>% 
-    mutate(weekday = ifelse(grepl("S(at|un)", weekday), 
-                            "weekend", "weekday")) %>% 
-    group_by(member_casual, weekday, start_int_hour) %>% 
+    group_by(member_casual, weekday, start_int_hour, total_trips) %>% 
     summarise(total_hour = sum(total_hour)) %>% 
-    left_join(weekday_end_sum) %>% 
-    mutate(percent = 100 * total_hour / total)
+    mutate(percent = 100 * total_hour / total_trips)
 ```
 
 ```{r}
-ggplot(data = hour_sum_df) +
+ggplot(data = total_hour_df) +
     geom_bar(position = position_dodge(), stat = "identity") +
     facet_wrap("weekday", dir = "v") +
     scale_x_continuous(breaks = seq(0, 24, 3),
@@ -213,18 +199,35 @@ ggplot(data = hour_sum_df) +
           panel.spacing.x = )
 ```
 
-```{r}
-ggplot(data = df) +
-    geom_bar(position = position_dodge(), 
-                   mapping = aes(x = month_year, fill = member_casual))
-```
- 
+analyze months
 
 ```{r}
-ggplot(data = df) +
-    geom_bar(position = position_dodge2()) +
+month_df <- df %>% 
+    group_by(member_casual, month_year) %>% 
+    summarise(total_month = length(member_casual)) %>% 
+    left_join(trip_count) %>% 
+    mutate(percent = 100 * total_month / total_trips)
+```
+
+```{r}
+ggplot(data = month_df) +
+    geom_bar(position = position_dodge(), stat = "identity") +
+    aes(x = month_year, y = percent, fill = member_casual)
+```
+ 
+```{r}
+day_df <- df %>% 
+    group_by(member_casual, month_year, day) %>% 
+    summarise(total_day = length(member_casual)) %>% 
+    left_join(trip_count) %>% 
+    mutate(percent = 100 * total_day / total_trips)
+```
+ 
+```{r}
+ggplot(data = day_df) +
+    geom_bar(position = position_dodge(), stat = "identity") +
     facet_wrap("month_year") +
-    aes(x = day, fill = member_casual)
+    aes(x = day, y = percent, fill = member_casual)
 ```
 
 
