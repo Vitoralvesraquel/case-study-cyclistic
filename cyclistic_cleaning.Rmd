@@ -37,13 +37,13 @@ compare_df_cols(df_list, return = "mismatch", strict_description = TRUE)
 ```
 
 
-
 Count total number of rows in the list.
 
 ```{r}
 sum_rows_list <- sum(sapply(df_list, nrow))
 sum_rows_list
 ```
+
 
 Combine all data from the list. Compare the number of rows in the list with the
 number of rows in the new dataframe to verify that all rows were combined.
@@ -53,21 +53,29 @@ df <- bind_rows(df_list)
 sum_rows_list == nrow(df)
 
 ```
+
+
 Remove list from memory since it will not be used from now on.
+
 ```{r}
 rm(df_list)
 ```
+
 
 View columns data types and first rows.
 
 ```{r}
 glimpse(df)
 ```
+
+
 Check for NAs.
 
 ```{r}
 colSums(is.na(df))
 ```
+
+
 Count unique values for ride_id and compare with number of rows to check for 
 duplicates.
 
@@ -75,15 +83,21 @@ duplicates.
 length(unique(df$ride_id)) == sum_rows_list
 ```
 
-Create columns for trip duration, month_year, day, weekday, and start hour as 
-integer.
+Remove ride_id column.
+```{r}
+df$ride_id <- NULL
+```
+
+
+Create columns for trip duration and year/month, day, day of the week, and start hour as integer.
+
 
 ```{r}
 df <- df %>% 
     mutate(trip_duration = as.duration(ended_at - started_at),
            month_year = format(started_at, "%Y-%m"),
            day = day(started_at),
-           weekday = wday(started_at, label = TRUE),
+           day_of_week = wday(started_at, label = TRUE),
            start_int_hour = as.integer(format(started_at, "%H")))
 ```
 
@@ -99,16 +113,19 @@ maximum is in weeks, which is too big.
 Values smaller than 1 minute will also be disconsidered, since they could 
 represent false starts or users trying to re-dock, according to the data 
 description at https://ride.divvybikes.com/system-data.
-Large values must be discussed with the people responsible for the data before 
-discarding. Duration values longer than one day are considered as lost or stolen 
-bikes, according to 
-https://help.divvybikes.com/hc/en-us/articles/360033484791-What-if-I-keep-a-bike-out-too-long-, 
-and will remain in the dataset for further analysis.
+Duration values longer than one day are considered as lost or stolen bikes, 
+according to 
+https://help.divvybikes.com/hc/en-us/articles/360033484791-What-if-I-keep-a-bike-out-too-long-, and will remain in the dataset for further analysis.
 
 ```{r}
 df <- df[df$trip_duration > 60,]
 summary(df$trip_duration)
 ```
+
+```{r}
+glimpse(df)
+```
+
 
 Remove extra whitespaces from station names.
 
@@ -118,15 +135,18 @@ df <- df %>%
            end_station_name = str_squish(end_station_name))
 ```
 
+
 check unique values
 
 ```{r}
 unique(df$rideable_type)
 unique(df$member_casual)
 ```
+
 It is not explained at the data description at the company website what 
 docked_bike means in rideable_type. It will remain in the analysis until 
 clarified.
+
 
 compare start and end station names
 
@@ -163,8 +183,7 @@ save(df, file = "Data/df.Rda")
 ```
 
 ```{r}
-rm(df, sum_rows_list, only_end, only_start, unique_start_station, 
-   unique_end_station)
+rm(list = ls())
 ```
 
 
