@@ -68,14 +68,21 @@ View column names to guide the analysis.
 colnames(df)
 ```
 
+#### Trip duration
+
+```{r}
+summary(df$trip_duration)
+```
+
 
 Duration values longer than one day are considered as lost or stolen bikes, according to https://help.divvybikes.com/hc/en-us/articles/360033484791-What-if-I-keep-a-bike-out-too-long-. In this analysis, they will be considered as missing.
+
+Trip duration longer than one day by customer type:
 
 ```{r}
 ggplot(data = df[df$trip_duration > 86400, ]) +
     geom_bar(width = 0.5, mapping = aes(x = member_casual, fill = rideable_type))
 ```
-
 
 There are no electric bikes missing, this can be due to battery depletion or 
 some tracking device included only on this model.
@@ -90,15 +97,49 @@ df <- df[df$trip_duration <= 86400, ]
 ```
 
 
-Comparing average trip duration for both groups.
+Comparing trip duration by customer type:
 
 ```{r}
 df %>% group_by(member_casual) %>% 
+    summarise(mean_duration = hms::as_hms(round(mean(trip_duration))),
+              median_duration = hms::as_hms(round(median(trip_duration))))
+```
+ 
+ Plotting trip duration shorter than 1 hour:
+ 
+```{r}
+ggplot(data = df[df$trip_duration < 3600,]) +
+    geom_histogram(position = position_dodge()) +
+    aes(x = trip_duration, fill = member_casual) +
+    scale_x_continuous(breaks = seq(0, 3600, 300), labels = seq(0, 60, 5),
+                       name = "minutes")
+```
+
+Comparing trip duration for both customer types by day of the week.
+
+```{r}
+dur_day <- df %>% 
+    group_by(day_of_week, member_casual) %>% 
     summarise(mean_duration = hms::as_hms(round(mean(trip_duration))))
+dur_day
 ```
 
 
-comparing trip count.
+```{r}
+ggplot(dur_day, aes(x = day_of_week, y = mean_duration, fill = member_casual)) +
+    geom_bar(stat = "identity", position = position_dodge2(width = 1)) +
+    labs(title = "Average trip duration for each day of the week") +
+    theme(legend.title = element_blank())
+```
+```
+
+
+#### Trip count
+
+```{r}
+table(df$member_casual)
+```
+
 
 ```{r}
 ggplot(data = df) +
@@ -112,29 +153,29 @@ ggplot(data = df) +
 ```{r}
 ggplot(data = df) +
     geom_bar(position = position_dodge2(width = 1),
-             width = 0.8, mapping = aes(x = weekday, fill = member_casual)) +
-    labs(title = "Number of casual and members rides in each weekday" )
+             width = 0.8, mapping = aes(x = day_of_week, fill = member_casual)) +
+    labs(title = "Number of casual and members rides in each day of the week" )
 ```
 
 Since the total number of member trips is higher than casual trips, their behavior 
 would be better expressed in percentage of total trips for each group.
 
 ```{r}
-weekday_df <- as.data.frame(table(df$member_casual, df$weekday))
-colnames(weekday_df) <- c("member_casual", "weekday", "trips")
+day_of_week_df <- as.data.frame(table(df$member_casual, df$day_of_week))
+colnames(day_of_week_df) <- c("member_casual", "day_of_week", "trips")
 
-trip_count <- weekday_df %>% 
+trip_count <- day_of_week_df %>% 
     group_by(member_casual) %>% 
     summarise(total_trips = sum(trips))
 
-weekday_df <- left_join(weekday_df, trip_count) %>% 
+day_of_week_df <- left_join(day_of_week_df, trip_count) %>% 
     mutate(percent = 100 * trips / total_trips)
 ```
 
 ```{r}
-ggplot(weekday_df, aes(x = weekday, y = percent, fill = member_casual)) +
+ggplot(day_of_week_df, aes(x = day_of_week, y = percent, fill = member_casual)) +
     geom_bar(stat = "identity", position = position_dodge2(width = 1)) +
-    labs(title = "Percentage of rides for each weekday") +
+    labs(title = "Percentage of rides for each day of the week") +
     theme(legend.title = element_blank())
 ```
 
@@ -147,7 +188,7 @@ for both groups.
 ```{r}
 ggplot(data = df) +
     geom_bar(position = position_dodge()) +
-    facet_wrap("weekday") +
+    facet_wrap("day_of_week") +
     scale_x_continuous(breaks = seq(0, 24, 3)) +
     aes(x = start_int_hour, fill = member_casual) +
     labs(x = "Hour", y = "Number of trips") +
@@ -156,7 +197,7 @@ ggplot(data = df) +
 
 ```{r}
 hour_df <- df %>% 
-    group_by(member_casual, weekday, start_int_hour) %>% 
+    group_by(member_casual, day_of_week, start_int_hour) %>% 
     summarise(total_hour = length(member_casual)) %>% 
     left_join(trip_count) %>% 
     mutate(percent = 100 * total_hour / total_trips)
@@ -165,7 +206,7 @@ hour_df <- df %>%
 ```{r}
 ggplot(data = hour_df) +
     geom_bar(position = position_dodge(), stat = "identity") +
-    facet_wrap("weekday") +
+    facet_wrap("day_of_week") +
     scale_x_continuous(breaks = seq(0, 24, 3),
                        minor_breaks = seq(0, 24)) +
     aes(x = start_int_hour, y = percent, fill = member_casual) +
@@ -180,9 +221,9 @@ confirm that members use the service more to commute to work than casuals, while
 
 ```{r}
 total_hour_df <- hour_df %>% 
-    mutate(weekday = ifelse(grepl("S(at|un)", weekday), 
+    mutate(day_of_week = ifelse(grepl("S(at|un)", day_of_week), 
                             "weekend", "weekday")) %>% 
-    group_by(member_casual, weekday, start_int_hour, total_trips) %>% 
+    group_by(member_casual, day_of_week, start_int_hour, total_trips) %>% 
     summarise(total_hour = sum(total_hour)) %>% 
     mutate(percent = 100 * total_hour / total_trips)
 ```
@@ -190,7 +231,7 @@ total_hour_df <- hour_df %>%
 ```{r}
 ggplot(data = total_hour_df) +
     geom_bar(position = position_dodge(), stat = "identity") +
-    facet_wrap("weekday", dir = "v") +
+    facet_wrap("day_of_week", dir = "v") +
     scale_x_continuous(breaks = seq(0, 24, 3),
                        minor_breaks = seq(0, 24)) +
     aes(x = start_int_hour, y = percent, fill = member_casual) +
@@ -232,13 +273,6 @@ ggplot(data = day_df) +
 
 
 
-analyze duration
-```{r}
-ggplot(data = df[df$trip_duration < 3600,]) +
-    geom_histogram(position = position_dodge()) +
-    aes(x = trip_duration, fill = member_casual)
-    
-```
 
 
 
