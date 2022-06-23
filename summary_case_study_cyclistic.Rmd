@@ -1,7 +1,7 @@
 ---
-title: "Case Study Cyclistic"
+title: "Case Study Cyclistic Summary Analysis"
 author: "Vitor Alves Raquel"
-date: '2022-06-08'
+date: '2022-06-23'
 output: 
     html_document:
         code_folding: "hide"
@@ -127,11 +127,7 @@ Comparing trip duration for both customer types by day of the week.
 dur_day <- df %>% 
     group_by(day_of_week, member_casual) %>% 
     summarise(mean_duration = hms::as_hms(round(mean(trip_duration))))
-dur_day
-```
 
-
-```{r}
 ggplot(dur_day, aes(x = day_of_week, y = mean_duration, fill = member_casual)) +
     geom_bar(stat = "identity", position = position_dodge2(width = 1)) +
     labs(title = "Average trip duration for each day of the week") +
@@ -140,11 +136,6 @@ ggplot(dur_day, aes(x = day_of_week, y = mean_duration, fill = member_casual)) +
 
 
 #### Trip count
-
-```{r}
-table(df$member_casual)
-```
-
 
 ```{r}
 ggplot(data = df) +
@@ -165,6 +156,8 @@ ggplot(data = df) +
 Since the total number of member trips is higher than casual trips, their behavior 
 would be better expressed in percentage of total trips for each group.
 
+
+
 ```{r}
 day_of_week_df <- as.data.frame(table(df$member_casual, df$day_of_week))
 colnames(day_of_week_df) <- c("member_casual", "day_of_week", "trips")
@@ -175,9 +168,8 @@ trip_count <- day_of_week_df %>%
 
 day_of_week_df <- left_join(day_of_week_df, trip_count) %>% 
     mutate(percent = 100 * trips / total_trips)
-```
 
-```{r}
+
 ggplot(day_of_week_df, aes(x = day_of_week, y = percent, fill = member_casual)) +
     geom_bar(stat = "identity", position = position_dodge2(width = 1)) +
     labs(title = "Percentage of rides for each day of the week") +
@@ -190,6 +182,51 @@ This suggests that members use bikes while commuting.
 This can be further explored by comparing the time of the day when trips happen 
 for both groups.
 
+
+```{r}
+hour_df <- df %>% 
+    group_by(member_casual, day_of_week, start_int_hour) %>% 
+    summarise(total_hour = length(member_casual)) %>% 
+    left_join(trip_count) %>% 
+    mutate(percent = 100 * total_hour / total_trips)
+
+total_hour_df <- hour_df %>% 
+    mutate(day_of_week = ifelse(grepl("S(at|un)", day_of_week), 
+                            "weekend", "weekday")) %>% 
+    group_by(member_casual, day_of_week, start_int_hour, total_trips) %>% 
+    summarise(total_hour = sum(total_hour)) %>% 
+    mutate(percent = 100 * total_hour / total_trips)
+
+ggplot(data = total_hour_df) +
+    geom_bar(position = position_dodge(), stat = "identity") +
+    facet_wrap("day_of_week", dir = "v") +
+    scale_x_continuous(breaks = seq(0, 24, 3),
+                       minor_breaks = seq(0, 24)) +
+    aes(x = start_int_hour, y = percent, fill = member_casual) +
+    labs(x = "Hour", y = "Percent") +
+    theme(legend.title = element_blank(),
+          panel.spacing.x = )
+```
+The shape of the plots are very different for weekends and weekdays and they 
+confirm that members use the service more to commute to work than casuals, while casuals use more on weekends than members.
+
+
+analyze months
+
+```{r}
+month_df <- df %>% 
+    group_by(member_casual, month_year) %>% 
+    summarise(total_month = length(member_casual)) %>% 
+    left_join(trip_count) %>% 
+    mutate(percent = 100 * total_month / total_trips)
+
+ggplot(data = month_df) +
+    geom_bar(position = position_dodge(), stat = "identity") +
+    aes(x = month_year, y = percent, fill = member_casual)
+```
+ 
+### Appendix
+
 ```{r}
 ggplot(data = df) +
     geom_bar(position = position_dodge()) +
@@ -200,13 +237,6 @@ ggplot(data = df) +
     theme(legend.title = element_blank())
 ```
 
-```{r}
-hour_df <- df %>% 
-    group_by(member_casual, day_of_week, start_int_hour) %>% 
-    summarise(total_hour = length(member_casual)) %>% 
-    left_join(trip_count) %>% 
-    mutate(percent = 100 * total_hour / total_trips)
-```
 
 ```{r}
 ggplot(data = hour_df) +
@@ -219,109 +249,15 @@ ggplot(data = hour_df) +
     theme(legend.title = element_blank())
 ```
 
-The shape of the plots are very different for weekends and weekdays and they 
-confirm that members use the service more to commute to work than casuals, while casuals use more on weekends than members.
-
-<!-- create 2 plots, weekday and weekend, for better presentation -->
-
-```{r}
-total_hour_df <- hour_df %>% 
-    mutate(day_of_week = ifelse(grepl("S(at|un)", day_of_week), 
-                            "weekend", "weekday")) %>% 
-    group_by(member_casual, day_of_week, start_int_hour, total_trips) %>% 
-    summarise(total_hour = sum(total_hour)) %>% 
-    mutate(percent = 100 * total_hour / total_trips)
-```
-
-```{r}
-ggplot(data = total_hour_df) +
-    geom_bar(position = position_dodge(), stat = "identity") +
-    facet_wrap("day_of_week", dir = "v") +
-    scale_x_continuous(breaks = seq(0, 24, 3),
-                       minor_breaks = seq(0, 24)) +
-    aes(x = start_int_hour, y = percent, fill = member_casual) +
-    labs(x = "Hour", y = "Percent") +
-    theme(legend.title = element_blank(),
-          panel.spacing.x = )
-```
-
-analyze months
-
-```{r}
-month_df <- df %>% 
-    group_by(member_casual, month_year) %>% 
-    summarise(total_month = length(member_casual)) %>% 
-    left_join(trip_count) %>% 
-    mutate(percent = 100 * total_month / total_trips)
-```
-
-```{r}
-ggplot(data = month_df) +
-    geom_bar(position = position_dodge(), stat = "identity") +
-    aes(x = month_year, y = percent, fill = member_casual)
-```
- 
 ```{r}
 day_df <- df %>% 
     group_by(member_casual, month_year, day) %>% 
     summarise(total_day = length(member_casual)) %>% 
     left_join(trip_count) %>% 
     mutate(percent = 100 * total_day / total_trips)
-```
- 
-```{r}
+
 ggplot(data = day_df) +
     geom_bar(position = position_dodge(), stat = "identity") +
     facet_wrap("month_year") +
     aes(x = day, y = percent, fill = member_casual)
 ```
-
-
-<!-- #### analyze geographical coordinates -->
-
-<!-- ```{r} -->
-<!-- # library(mapview) -->
-<!-- # library(maps) -->
-<!-- colnames(df) -->
-<!-- ``` -->
-
-
-<!-- ```{r} -->
-<!-- # write.csv(select(df, -c("rideable_type", "start_station_name",  -->
-<!-- #                         "start_station_id", "end_station_name",  -->
-<!-- #                         "end_station_id")),  -->
-<!-- #           file = "Data/df2.csv") -->
-<!-- ``` -->
-
-
-
-
-<!-- ```{r} -->
-<!-- # set.seed(111) -->
-<!-- #  -->
-<!-- # to_map_df <- sample_n(df, 1000) -->
-<!-- #  -->
-<!-- # mapview(to_map_df, xcol = "start_lng", ycol = "start_lat", crs = 4269,  -->
-<!-- #         grid = FALSE) -->
-
-<!-- ``` -->
-
-<!-- ```{r} -->
-<!-- # m <- ggplot(to_map_df, aes(x = start_lng, y = start_lat)) + -->
-<!-- #     geom_point() -->
-<!-- #  -->
-<!-- # m -->
-<!-- ``` -->
-
-<!-- ```{r} -->
-<!-- # library(ggmap) -->
-<!-- ``` -->
-
-<!-- ```{r} -->
-<!-- # test_map <- qmplot(x = start_lng, y = start_lat, data = to_map_df) -->
-<!-- ``` -->
-
-<!-- ```{r} -->
-<!-- # plot(test_map) -->
-<!-- ``` -->
-
