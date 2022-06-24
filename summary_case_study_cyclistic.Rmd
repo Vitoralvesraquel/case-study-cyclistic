@@ -5,6 +5,8 @@ date: '2022-06-23'
 output: 
     html_document:
         code_folding: "hide"
+        fig_width: 12
+        fig_height: 6
 ---
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(cache = TRUE, message = FALSE, warning = FALSE)
@@ -113,7 +115,7 @@ df %>% group_by(member_casual) %>%
  
  Plotting trip duration shorter than 1 hour:
  
-```{r}
+```{r fig.width=14}
 ggplot(data = df[df$trip_duration < 3600,]) +
     geom_histogram(position = position_dodge()) +
     aes(x = trip_duration, fill = member_casual) +
@@ -183,7 +185,7 @@ This can be further explored by comparing the time of the day when trips happen
 for both groups.
 
 
-```{r}
+```{r fig.width=14}
 hour_df <- df %>% 
     group_by(member_casual, day_of_week, start_int_hour) %>% 
     summarise(total_hour = length(member_casual)) %>% 
@@ -207,13 +209,14 @@ ggplot(data = total_hour_df) +
     theme(legend.title = element_blank(),
           panel.spacing.x = )
 ```
+
 The shape of the plots are very different for weekends and weekdays and they 
 confirm that members use the service more to commute to work than casuals, while casuals use more on weekends than members.
 
 
 analyze months
 
-```{r}
+```{r fig.width=14}
 month_df <- df %>% 
     group_by(member_casual, month_year) %>% 
     summarise(total_month = length(member_casual)) %>% 
@@ -227,7 +230,7 @@ ggplot(data = month_df) +
  
 ### Appendix
 
-```{r}
+```{r fig.width=14}
 ggplot(data = df) +
     geom_bar(position = position_dodge()) +
     facet_wrap("day_of_week") +
@@ -238,7 +241,7 @@ ggplot(data = df) +
 ```
 
 
-```{r}
+```{r fig.width=14}
 ggplot(data = hour_df) +
     geom_bar(position = position_dodge(), stat = "identity") +
     facet_wrap("day_of_week") +
@@ -249,7 +252,7 @@ ggplot(data = hour_df) +
     theme(legend.title = element_blank())
 ```
 
-```{r}
+```{r fig.width=14}
 day_df <- df %>% 
     group_by(member_casual, month_year, day) %>% 
     summarise(total_day = length(member_casual)) %>% 
