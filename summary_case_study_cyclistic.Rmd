@@ -44,7 +44,7 @@ containing a CSV file, comprehending the last 12 months, from June 2021 to May
 The merging and cleaning is on cyclistic_cleaning.Rmd, which saves the file 
 "df.Rda" on "Data" directory.
 
-```{r results='hide'}
+```{r initial_settings results='hide'}
 wd <- "/home/vitor/RStudio-projects/case-study-cyclistic"
 input_file <- "Data/df.Rda"
 
@@ -56,7 +56,7 @@ load(input_file)
 
 ## Analysis
 
-```{r}
+```{r libraries}
 library(tidyverse)
 library(lubridate)
 library(vtable)
@@ -67,11 +67,11 @@ library(vtable)
 
 View column names to guide the analysis.
 
-```{r}
+```{r colnames}
 colnames(df)
 ```
 
-```{r}
+```{r sumtable}
 sumtable(df[c("rideable_type", "member_casual", "trip_duration")], 
          add.median = TRUE)
 ```
@@ -87,7 +87,7 @@ Duration values longer than one day are considered as lost or stolen bikes, acco
 
 Trip duration longer than one day by customer type:
 
-```{r}
+```{r duration_customer}
 ggplot(data = df[df$trip_duration > 86400, ]) +
     geom_bar(width = 0.5, mapping = aes(x = member_casual, fill = rideable_type))
 ```
@@ -100,14 +100,14 @@ model.
 
 Trip duration values higher than one day will be not considered from now on.
 
-```{r}
+```{r duration_one_day}
 df <- df[df$trip_duration <= 86400, ]
 ```
 
 
 Comparing trip duration by customer type:
 
-```{r}
+```{r mean_median_duration}
 df %>% group_by(member_casual) %>% 
     summarise(mean_duration = hms::as_hms(round(mean(trip_duration))),
               median_duration = hms::as_hms(round(median(trip_duration))))
@@ -115,7 +115,7 @@ df %>% group_by(member_casual) %>%
  
  Plotting trip duration shorter than 1 hour:
  
-```{r fig.width=14}
+```{r duration_hour fig.width=14}
 ggplot(data = df[df$trip_duration < 3600,]) +
     geom_histogram(position = position_dodge()) +
     aes(x = trip_duration, fill = member_casual) +
@@ -125,7 +125,7 @@ ggplot(data = df[df$trip_duration < 3600,]) +
 
 Comparing trip duration for both customer types by day of the week.
 
-```{r}
+```{r duration_customer_week}
 dur_day <- df %>% 
     group_by(day_of_week, member_casual) %>% 
     summarise(mean_duration = hms::as_hms(round(mean(trip_duration))))
@@ -139,7 +139,7 @@ ggplot(dur_day, aes(x = day_of_week, y = mean_duration, fill = member_casual)) +
 
 #### Trip count
 
-```{r}
+```{r trip_count}
 ggplot(data = df) +
     geom_bar(width = 0.5, mapping = aes(x = member_casual,
                                         fill = rideable_type)) +
@@ -148,7 +148,7 @@ ggplot(data = df) +
 ```
 
 
-```{r}
+```{r trip_count_week}
 ggplot(data = df) +
     geom_bar(position = position_dodge2(width = 1),
              width = 0.8, mapping = aes(x = day_of_week, fill = member_casual)) +
@@ -160,7 +160,7 @@ would be better expressed in percentage of total trips for each group.
 
 
 
-```{r}
+```{r trip_percent_week}
 day_of_week_df <- as.data.frame(table(df$member_casual, df$day_of_week))
 colnames(day_of_week_df) <- c("member_casual", "day_of_week", "trips")
 
@@ -185,7 +185,7 @@ This can be further explored by comparing the time of the day when trips happen
 for both groups.
 
 
-```{r fig.width=14}
+```{r trip_percent_weekday fig.width=14}
 hour_df <- df %>% 
     group_by(member_casual, day_of_week, start_int_hour) %>% 
     summarise(total_hour = length(member_casual)) %>% 
@@ -216,7 +216,7 @@ confirm that members use the service more to commute to work than casuals, while
 
 analyze months
 
-```{r fig.width=14}
+```{r trip_percent_month fig.width=14}
 month_df <- df %>% 
     group_by(member_casual, month_year) %>% 
     summarise(total_month = length(member_casual)) %>% 
@@ -230,7 +230,7 @@ ggplot(data = month_df) +
  
 ### Appendix
 
-```{r fig.width=14}
+```{r trip_count_hour_week fig.width=14}
 ggplot(data = df) +
     geom_bar(position = position_dodge()) +
     facet_wrap("day_of_week") +
@@ -241,7 +241,7 @@ ggplot(data = df) +
 ```
 
 
-```{r fig.width=14}
+```{r trip_percent_hour_week ig.width=14}
 ggplot(data = hour_df) +
     geom_bar(position = position_dodge(), stat = "identity") +
     facet_wrap("day_of_week") +
@@ -252,7 +252,7 @@ ggplot(data = hour_df) +
     theme(legend.title = element_blank())
 ```
 
-```{r fig.width=14}
+```{r trip_percent_day_month fig.width=14}
 day_df <- df %>% 
     group_by(member_casual, month_year, day) %>% 
     summarise(total_day = length(member_casual)) %>% 
