@@ -25,8 +25,6 @@ very good chance to convert casual riders into members. She notes that casual ri
 Moreno has set a clear goal: Design marketing strategies aimed at converting casual riders into annual members. In order to do that, however, the marketing analyst team needs to better understand how annual members and casual riders differ, why casual riders would buy a membership, and how digital media could affect their marketing tactics. Moreno and her team are
 interested in analyzing the Cyclistic historical bike trip data to identify trends. 
 
-### Ask
-
 Three questions will guide the future marketing program:
 
 1. How do annual members and casual riders use Cyclistic bikes differently?
@@ -34,12 +32,3 @@ Three questions will guide the future marketing program:
 3. How can Cyclistic use digital media to influence casual riders to become members?
 
 Moreno has assigned you the first question to answer: How do annual members and casual riders use Cyclistic bikes differently?
-
-You will produce a report with the following deliverables:
-
-1. A clear statement of the business task
-2. A description of all data sources used
-3. Documentation of any cleaning or manipulation of data
-4. A summary of your analysis
-5. Supporting visualizations and key findings
-6. Your top three recommendations based on your analysis
