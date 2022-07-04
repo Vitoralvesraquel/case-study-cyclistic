@@ -178,6 +178,8 @@ accuracy at around 1 kilometer.
 diagnosed any problems in electrical bikes?
 
 
+Save cleaned dataframe to be used in the analysis.
+
 ```{r}
 save(df, file = "Data/df.Rda")
 ```
