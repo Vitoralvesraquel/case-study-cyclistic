@@ -2,11 +2,9 @@
 title: "Case Study Cyclistic Summary Analysis"
 author: "Vitor Alves Raquel"
 date: '2022-06-23'
-output: 
+output:     
     html_document:
         code_folding: "hide"
-        fig_width: 12
-        fig_height: 6
 ---
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(cache = TRUE, message = FALSE, warning = FALSE)
@@ -44,7 +42,7 @@ containing a CSV file, comprehending the last 12 months, from June 2021 to May
 The merging and cleaning is on cyclistic_cleaning.Rmd, which saves the file 
 "df.Rda" on "Data" directory.
 
-```{r initial_settings results='hide'}
+```{r initial_settings, results='hide'}
 wd <- "/home/vitor/RStudio-projects/case-study-cyclistic"
 input_file <- "Data/df.Rda"
 
@@ -115,7 +113,7 @@ df %>% group_by(member_casual) %>%
  
  Plotting trip duration shorter than 1 hour:
  
-```{r duration_hour fig.width=14}
+```{r duration_hour}
 ggplot(data = df[df$trip_duration < 3600,]) +
     geom_histogram(position = position_dodge()) +
     aes(x = trip_duration, fill = member_casual) +
@@ -185,7 +183,7 @@ This can be further explored by comparing the time of the day when trips happen
 for both groups.
 
 
-```{r trip_percent_weekday fig.width=14}
+```{r trip_percent_weekday}
 hour_df <- df %>% 
     group_by(member_casual, day_of_week, start_int_hour) %>% 
     summarise(total_hour = length(member_casual)) %>% 
@@ -216,7 +214,7 @@ confirm that members use the service more to commute to work than casuals, while
 
 analyze months
 
-```{r trip_percent_month fig.width=14}
+```{r trip_percent_month}
 month_df <- df %>% 
     group_by(member_casual, month_year) %>% 
     summarise(total_month = length(member_casual)) %>% 
@@ -230,7 +228,7 @@ ggplot(data = month_df) +
  
 ### Appendix
 
-```{r trip_count_hour_week fig.width=14}
+```{r trip_count_hour_week}
 ggplot(data = df) +
     geom_bar(position = position_dodge()) +
     facet_wrap("day_of_week") +
@@ -241,7 +239,7 @@ ggplot(data = df) +
 ```
 
 
-```{r trip_percent_hour_week ig.width=14}
+```{r trip_percent_hour_week}
 ggplot(data = hour_df) +
     geom_bar(position = position_dodge(), stat = "identity") +
     facet_wrap("day_of_week") +
@@ -252,7 +250,7 @@ ggplot(data = hour_df) +
     theme(legend.title = element_blank())
 ```
 
-```{r trip_percent_day_month fig.width=14}
+```{r trip_percent_day_month}
 day_df <- df %>% 
     group_by(member_casual, month_year, day) %>% 
     summarise(total_day = length(member_casual)) %>% 

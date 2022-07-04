@@ -39,7 +39,7 @@ containing a CSV file, comprehending the last 12 months, from June 2021 to May
 ![Directory structure](directory_structure.png)
 
 
-The merging and cleaning is on cyclistic_cleaning.Rmd, which saves the file 
+The merging and cleaning was made on cyclistic_cleaning.Rmd, which saves the file 
 "df.Rda" on "Data" directory.
 
 ```{r results='hide'}
