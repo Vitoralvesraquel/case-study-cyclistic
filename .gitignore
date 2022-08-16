@@ -41,7 +41,6 @@ vignettes/*.pdf
 
 # Files created for visualization
 README.html
-case-study-cyclistic.nb.html
 
 # Data directory
 Data
